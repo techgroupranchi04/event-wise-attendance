@@ -93,7 +93,7 @@ select{
       <canvas id="checkinChart"></canvas>
     </div>
     <div class="highlight">
-      <strong>Note:</strong><br>
+      <strong>Highlighted venues (total scans):</strong><br>
       The LIT School, Bangalore (380 scans): The primary registration desk &amp; badge collection hub.<br>
       Suchitra - HNN Hall (304 scans): The networking lounge / open hall at Suchitra complex.
     </div>
@@ -238,11 +238,8 @@ function render() {
 
   if (chart) chart.destroy();
 
-  // Label: start time + short event name
-  const labels = rows.map(r => {
-    const start = r.scheduled.split(" – ")[0] || r.scheduled;
-    return `${start}\n${r.event}`;
-  });
+  // Labels = event names (order is still by scheduled time)
+  const labels = rows.map(r => r.event);
 
   chart = new Chart(document.getElementById("checkinChart"), {
     type: "bar",
@@ -277,17 +274,12 @@ function render() {
       },
       scales: {
         x: {
-          title: { display: true, text: "Scheduled time (morning → evening)" },
+          title: { display: true, text: "Events (morning → evening)" },
           ticks: {
             autoSkip: false,
             maxRotation: 90,
             minRotation: 45,
-            font: { size: 10 },
-            callback: function(value, index) {
-              // Show only start time on axis for clarity
-              const r = rows[index];
-              return r ? (r.scheduled.split(" – ")[0] || r.scheduled) : "";
-            }
+            font: { size: 10 }
           },
           grid: { display: false }
         },
