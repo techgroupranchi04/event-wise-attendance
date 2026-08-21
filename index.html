@@ -231,7 +231,7 @@ function render() {
 
   const dateText = dateSelect.options[dateSelect.selectedIndex].text;
   chartTitle.textContent = "Event-wise check-ins (time order)";
-  chartNote.textContent = `${dateText} • ${rows.length} event slot${rows.length === 1 ? "" : "s"} • left = morning, right = evening`;
+  chartNote.textContent = `${dateText} • ${rows.length} event slot${rows.length === 1 ? "" : "s"}`;
 
   // Fixed height for vertical time-wise bars
   chartWrap.style.height = "520px";
