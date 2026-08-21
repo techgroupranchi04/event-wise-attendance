@@ -93,7 +93,7 @@ select{
       <canvas id="checkinChart"></canvas>
     </div>
     <div class="highlight">
-      <strong>Highlighted venues (total scans):</strong><br>
+      <strong>Note:</strong><br>
       The LIT School, Bangalore (380 scans): The primary registration desk &amp; badge collection hub.<br>
       Suchitra - HNN Hall (304 scans): The networking lounge / open hall at Suchitra complex.
     </div>
@@ -230,8 +230,9 @@ function render() {
   rows.sort((a, b) => a.scheduled.localeCompare(b.scheduled));
 
   const dateText = dateSelect.options[dateSelect.selectedIndex].text;
+  const totalScans = rows.reduce((sum, r) => sum + r.checkins, 0);
   chartTitle.textContent = "Event-wise check-ins (time order)";
-  chartNote.textContent = `${dateText} • ${rows.length} event slot${rows.length === 1 ? "" : "s"}`;
+  chartNote.textContent = `${dateText} • ${rows.length} event slot${rows.length === 1 ? "" : "s"} • ${totalScans.toLocaleString()} Total Scans`;
 
   // Fixed height for vertical time-wise bars
   chartWrap.style.height = "520px";
