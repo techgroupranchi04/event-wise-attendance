@@ -34,30 +34,16 @@ h1{margin:0;font-size:30px;line-height:1.15}
 .controls{
   background:var(--card);border:1px solid var(--border);
   border-radius:16px;padding:18px;box-shadow:var(--shadow);
-  display:grid;grid-template-columns:1.4fr .8fr auto;gap:14px;align-items:end;
-  margin-bottom:20px;
+  display:grid;grid-template-columns:1fr;gap:14px;align-items:end;
+  margin-bottom:20px;max-width:320px;
 }
 .field label{
   display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:7px
 }
-select,button{
+select{
   width:100%;height:44px;border:1px solid var(--border);
   border-radius:10px;background:#fff;padding:0 12px;font:inherit;color:var(--text)
 }
-button{
-  width:auto;padding:0 18px;background:var(--primary);border-color:var(--primary);
-  color:#fff;font-weight:700;cursor:pointer
-}
-button:hover{filter:brightness(.94)}
-.stats{
-  display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px
-}
-.stat{
-  background:var(--card);border:1px solid var(--border);
-  border-radius:16px;padding:18px;box-shadow:var(--shadow)
-}
-.stat-label{font-size:12px;color:var(--muted);font-weight:700}
-.stat-value{font-size:28px;font-weight:800;margin-top:6px}
 .chart-card{
   background:var(--card);border:1px solid var(--border);
   border-radius:16px;padding:22px;box-shadow:var(--shadow)
@@ -65,26 +51,14 @@ button:hover{filter:brightness(.94)}
 .chart-head{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;margin-bottom:16px}
 .chart-title{font-size:18px;font-weight:800;margin:0}
 .chart-note{font-size:12px;color:var(--muted);margin-top:5px}
-.chart-wrap{height:620px;position:relative}
-.table-wrap{margin-top:20px;overflow:auto;border:1px solid var(--border);border-radius:12px}
-table{width:100%;border-collapse:collapse;min-width:760px;background:#fff}
-th,td{padding:12px 14px;border-bottom:1px solid var(--border);text-align:left;font-size:13px}
-th{background:#fafbfc;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
-td:last-child,th:last-child{text-align:right}
-tr:last-child td{border-bottom:0}
-.badge{
-  display:inline-flex;padding:5px 8px;border-radius:999px;
-  background:var(--primary-soft);color:var(--primary);font-weight:800
-}
-.empty{
-  height:300px;display:grid;place-items:center;color:var(--muted);
-  font-size:14px
+.chart-wrap{height:520px;position:relative}
+.highlight{
+  margin-top:20px;padding:14px 18px;background:var(--primary-soft);
+  border:1px solid var(--primary);border-radius:10px;font-size:13px;line-height:1.55
 }
 @media(max-width:800px){
   .container{padding:20px 14px}
   h1{font-size:24px}
-  .controls{grid-template-columns:1fr}
-  .stats{grid-template-columns:1fr}
   .chart-wrap{height:520px}
 }
 </style>
@@ -94,30 +68,18 @@ tr:last-child td{border-bottom:0}
   <div class="header">
     <div class="eyebrow">Festival Check-in Analytics</div>
     <h1>Event-wise Check-ins by Date</h1>
-    <p class="subtitle">Compare actual check-ins for each scheduled event, with venue and date filters.</p>
+    <p class="subtitle">Compare actual check-ins for each scheduled event.</p>
   </div>
 
   <div class="controls">
     <div class="field">
-      <label for="venue">Venue</label>
-      <select id="venue"></select>
-    </div>
-    <div class="field">
       <label for="date">Date</label>
       <select id="date">
-        <option value="all">All dates</option>
-        <option value="14-Aug-2026">14 Aug 2026</option>
-        <option value="15-Aug-2026">15 Aug 2026</option>
-        <option value="16-Aug-2026">16 Aug 2026</option>
+        <option value="14-Aug-2026" selected>14 August 2026</option>
+        <option value="15-Aug-2026">15 August 2026</option>
+        <option value="16-Aug-2026">16 August 2026</option>
       </select>
     </div>
-    <button id="reset">Reset filters</button>
-  </div>
-
-  <div class="stats">
-    <div class="stat"><div class="stat-label">Events shown</div><div class="stat-value" id="eventCount">0</div></div>
-    <div class="stat"><div class="stat-label">Total check-ins</div><div class="stat-value" id="checkinTotal">0</div></div>
-    <div class="stat"><div class="stat-label">Highest event check-in</div><div class="stat-value" id="maxCheckin">0</div></div>
   </div>
 
   <div class="chart-card">
@@ -130,69 +92,132 @@ tr:last-child td{border-bottom:0}
     <div class="chart-wrap" id="chartWrap">
       <canvas id="checkinChart"></canvas>
     </div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Venue</th>
-            <th>Event</th>
-            <th>Scheduled time</th>
-            <th>Check-ins</th>
-          </tr>
-        </thead>
-        <tbody id="dataTable"></tbody>
-      </table>
+    <div class="highlight">
+      <strong>Note:</strong><br>
+      The LIT School, Bangalore (380 scans): The primary registration desk &amp; badge collection hub.<br>
+      Suchitra - HNN Hall (304 scans): The networking lounge / open hall at Suchitra complex.
     </div>
-
-    The LIT School, Bangalore (380 scans): The primary registration desk & badge collection hub. 
-
-Suchitra - HNN Hall (304 scans): The networking lounge / open hall at Suchitra complex. 
   </div>
 </div>
 
 <script>
-const DATA = [{"date": "14-Aug-2026", "event": "AI Films (Set 1)", "checkins": 55, "scheduled": "10:00 – 11:30", "venue": "Suchitra - Puravankara Audi"}, {"date": "14-Aug-2026", "event": "Karnataka Competition (Set 1)", "checkins": 82, "scheduled": "12:00 – 13:30", "venue": "Suchitra - Puravankara Audi"}, {"date": "14-Aug-2026", "event": "Masterclass / Talk", "checkins": 57, "scheduled": "14:30 – 16:00", "venue": "Suchitra - Puravankara Audi"}, {"date": "14-Aug-2026", "event": "Karnataka Competition (Set 2)", "checkins": 53, "scheduled": "16:30 – 18:00", "venue": "Suchitra - Puravankara Audi"}, {"date": "14-Aug-2026", "event": "Indian Competition (Set 1)", "checkins": 58, "scheduled": "19:00 – 20:30", "venue": "Suchitra - Puravankara Audi"}, {"date": "15-Aug-2026", "event": "Indian Competition (Set 2)", "checkins": 82, "scheduled": "10:30 – 12:00", "venue": "Suchitra - Puravankara Audi"}, {"date": "15-Aug-2026", "event": "Karnataka Competition (Set 3)", "checkins": 51, "scheduled": "12:00 – 13:30", "venue": "Suchitra - Puravankara Audi"}, {"date": "15-Aug-2026", "event": "Indian Competition (Set 3)", "checkins": 96, "scheduled": "14:30 – 16:00", "venue": "Suchitra - Puravankara Audi"}, {"date": "15-Aug-2026", "event": "Script to Screen (Goethe Institut / BISFF)", "checkins": 1, "scheduled": "17:00 – 18:30", "venue": "Suchitra - Puravankara Audi"}, {"date": "15-Aug-2026", "event": "Karnataka Competition (Set 4)", "checkins": 0, "scheduled": "19:30 – 21:00", "venue": "Suchitra - Puravankara Audi"}, {"date": "16-Aug-2026", "event": "Karnataka Competition (Set 5)", "checkins": 48, "scheduled": "10:00 – 11:30", "venue": "Suchitra - Puravankara Audi"}, {"date": "16-Aug-2026", "event": "Indian Competition (Set 4)", "checkins": 79, "scheduled": "12:30 – 14:00", "venue": "Suchitra - Puravankara Audi"}, {"date": "16-Aug-2026", "event": "Masterclass / Talk", "checkins": 68, "scheduled": "14:30 – 16:00", "venue": "Suchitra - Puravankara Audi"}, {"date": "16-Aug-2026", "event": "Indian Competition (Set 5)", "checkins": 9, "scheduled": "15:30 – 17:00", "venue": "Suchitra - Puravankara Audi"}, {"date": "14-Aug-2026", "event": "Asian Eye (Set 1)", "checkins": 44, "scheduled": "10:30 – 12:00", "venue": "Suchitra - Nani Angala"}, {"date": "14-Aug-2026", "event": "Animation Competition (Set 3 - Indian)", "checkins": 52, "scheduled": "14:30 – 16:00", "venue": "Suchitra - Nani Angala"}, {"date": "14-Aug-2026", "event": "Queer Qorner Competition (Set 2)", "checkins": 17, "scheduled": "18:30 – 20:00", "venue": "Suchitra - Nani Angala"}, {"date": "14-Aug-2026", "event": "Women's Cinema Collective (Set 1)", "checkins": 13, "scheduled": "18:30 – 20:00", "venue": "Suchitra - Nani Angala"}, {"date": "15-Aug-2026", "event": "Animation Competition (Set 4 - Indian)", "checkins": 58, "scheduled": "10:00 – 11:30", "venue": "Suchitra - Nani Angala"}, {"date": "15-Aug-2026", "event": "Women's Cinema Collective (Set 3)", "checkins": 54, "scheduled": "12:30 – 14:00", "venue": "Suchitra - Nani Angala"}, {"date": "15-Aug-2026", "event": "Animation Competition (Set 6 - Intl)", "checkins": 62, "scheduled": "14:30 – 16:00", "venue": "Suchitra - Nani Angala"}, {"date": "15-Aug-2026", "event": "International Competition (Set 3)", "checkins": 39, "scheduled": "16:30 – 18:00", "venue": "Suchitra - Nani Angala"}, {"date": "15-Aug-2026", "event": "Non Competition (Set 4)", "checkins": 27, "scheduled": "18:30 – 20:00", "venue": "Suchitra - Nani Angala"}, {"date": "16-Aug-2026", "event": "Animation Competition (Set 2 - Indian)", "checkins": 24, "scheduled": "10:00 – 11:30", "venue": "Suchitra - Nani Angala"}, {"date": "16-Aug-2026", "event": "Non Competition (Set 5)", "checkins": 39, "scheduled": "12:00 – 13:30", "venue": "Suchitra - Nani Angala"}, {"date": "16-Aug-2026", "event": "International Competition (Set 1)", "checkins": 31, "scheduled": "14:00 – 15:30", "venue": "Suchitra - Nani Angala"}, {"date": "16-Aug-2026", "event": "Non Competition (Set 6)", "checkins": 6, "scheduled": "15:30 – 17:00", "venue": "Suchitra - Nani Angala"}, {"date": "14-Aug-2026", "event": "Let's Include (Set 4)", "checkins": 21, "scheduled": "10:30 – 12:00", "venue": "Knowledgeum / Jain Knowledgeum Academy"}, {"date": "14-Aug-2026", "event": "Asian Eye (Set 2)", "checkins": 14, "scheduled": "12:30 – 14:00", "venue": "Knowledgeum / Jain Knowledgeum Academy"}, {"date": "14-Aug-2026", "event": "AI Films (Set 2)", "checkins": 4, "scheduled": "14:00 – 15:30", "venue": "Knowledgeum / Jain Knowledgeum Academy"}, {"date": "14-Aug-2026", "event": "Karnataka Competition (Set 5)", "checkins": 12, "scheduled": "14:30 – 16:00", "venue": "Knowledgeum / Jain Knowledgeum Academy"}, {"date": "14-Aug-2026", "event": "Karnataka Competition (Set 3)", "checkins": 0, "scheduled": "19:00 – 20:30", "venue": "Knowledgeum / Jain Knowledgeum Academy"}, {"date": "15-Aug-2026", "event": "Let's Include (Set 2)", "checkins": 17, "scheduled": "10:00 – 11:30", "venue": "Knowledgeum / Jain Knowledgeum Academy"}, {"date": "15-Aug-2026", "event": "Asian Eye (Set 3)", "checkins": 14, "scheduled": "12:30 – 14:00", "venue": "Knowledgeum / Jain Knowledgeum Academy"}, {"date": "15-Aug-2026", "event": "Let's Include (Set 1)", "checkins": 23, "scheduled": "14:30 – 16:00", "venue": "Knowledgeum / Jain Knowledgeum Academy"}, {"date": "15-Aug-2026", "event": "Karnataka Competition (Set 1)", "checkins": 9, "scheduled": "16:30 – 18:00", "venue": "Knowledgeum / Jain Knowledgeum Academy"}, {"date": "15-Aug-2026", "event": "AI Films (Set 3)", "checkins": 0, "scheduled": "18:30 – 20:00", "venue": "Knowledgeum / Jain Knowledgeum Academy"}, {"date": "16-Aug-2026", "event": "Let's Include (Set 3)", "checkins": 29, "scheduled": "10:00 – 11:30", "venue": "Knowledgeum / Jain Knowledgeum Academy"}, {"date": "16-Aug-2026", "event": "Karnataka Competition (Set 4)", "checkins": 30, "scheduled": "12:00 – 13:30", "venue": "Knowledgeum / Jain Knowledgeum Academy"}, {"date": "16-Aug-2026", "event": "Asian Eye (Set 4)", "checkins": 14, "scheduled": "14:30 – 16:00", "venue": "Knowledgeum / Jain Knowledgeum Academy"}, {"date": "16-Aug-2026", "event": "Karnataka Competition (Set 2)", "checkins": 0, "scheduled": "16:00 – 17:30", "venue": "Knowledgeum / Jain Knowledgeum Academy"}, {"date": "14-Aug-2026", "event": "International Competition (Set 1)", "checkins": 0, "scheduled": "10:00 – 11:31", "venue": "Indian Heritage Academy"}, {"date": "14-Aug-2026", "event": "FILM REVIEW WORKSHOP", "checkins": 0, "scheduled": "12:00 – 13:30", "venue": "Indian Heritage Academy"}, {"date": "14-Aug-2026", "event": "Women's Cinema Collective (Set 1)", "checkins": 0, "scheduled": "14:00 – 15:37", "venue": "Indian Heritage Academy"}, {"date": "14-Aug-2026", "event": "Indian Competition (Set 4)", "checkins": 5, "scheduled": "16:00 – 17:39", "venue": "Indian Heritage Academy"}, {"date": "14-Aug-2026", "event": "Dancing Lens (Set 1)", "checkins": 2, "scheduled": "18:00 – 19:30", "venue": "Indian Heritage Academy"}, {"date": "15-Aug-2026", "event": "Dancing Lens (Set 2)", "checkins": 3, "scheduled": "10:15 – 11:04", "venue": "Indian Heritage Academy"}, {"date": "15-Aug-2026", "event": "International Competition (Set 3)", "checkins": 4, "scheduled": "11:30 – 13:23", "venue": "Indian Heritage Academy"}, {"date": "15-Aug-2026", "event": "Indian Competition (Set 5)", "checkins": 8, "scheduled": "14:00 – 15:44", "venue": "Indian Heritage Academy"}, {"date": "15-Aug-2026", "event": "Women's Cinema Collective (Set 3)", "checkins": 13, "scheduled": "16:15 – 18:10", "venue": "Indian Heritage Academy"}, {"date": "15-Aug-2026", "event": "Animation Competition (Indian)", "checkins": 7, "scheduled": "18:30 – 20:00", "venue": "Indian Heritage Academy"}, {"date": "16-Aug-2026", "event": "Asian Eye (Set 3)", "checkins": 41, "scheduled": "10:00 – 12:04", "venue": "Indian Heritage Academy"}, {"date": "16-Aug-2026", "event": "Indian Competition (Set 6)", "checkins": 22, "scheduled": "12:30 – 14:10", "venue": "Indian Heritage Academy"}, {"date": "16-Aug-2026", "event": "Women's Cinema Collective (Set 4)", "checkins": 0, "scheduled": "15:00 – 16:58", "venue": "Indian Heritage Academy"}, {"date": "14-Aug-2026", "event": "RITWIK GHATAK RETROSPECTIVE & Talk", "checkins": 19, "scheduled": "18:00 – 19:30", "venue": "Bengaluru International Centre"}, {"date": "15-Aug-2026", "event": "International Competition (Set 4)", "checkins": 21, "scheduled": "10:00 – 12:01", "venue": "Bengaluru International Centre"}, {"date": "15-Aug-2026", "event": "Indian Competition (Set 3)", "checkins": 5, "scheduled": "12:30 – 14:08", "venue": "Bengaluru International Centre"}, {"date": "15-Aug-2026", "event": "Asian Eye (Set 2)", "checkins": 5, "scheduled": "15:00 – 16:56", "venue": "Bengaluru International Centre"}, {"date": "15-Aug-2026", "event": "Animation Competition (International)", "checkins": 5, "scheduled": "17:15 – 18:45", "venue": "Bengaluru International Centre"}, {"date": "15-Aug-2026", "event": "Indian Competition (Set 2)", "checkins": 0, "scheduled": "18:30 – 20:18", "venue": "Bengaluru International Centre"}, {"date": "16-Aug-2026", "event": "Indian Competition (Set 1)", "checkins": 31, "scheduled": "10:00 – 11:52", "venue": "Bengaluru International Centre"}, {"date": "16-Aug-2026", "event": "Janato Cinema at BISFF 2026", "checkins": 10, "scheduled": "12:00 – 13:30", "venue": "Bengaluru International Centre"}, {"date": "16-Aug-2026", "event": "Indian Competition (Set 7)", "checkins": 1, "scheduled": "15:00 – 16:45", "venue": "Bengaluru International Centre"}, {"date": "14-Aug-2026", "event": "Dancing Lens (Set 2)", "checkins": 0, "scheduled": "10:30 – 12:00", "venue": "NMKRV - Shashwathy"}, {"date": "14-Aug-2026", "event": "Queer Qorner Competition (Set 3)", "checkins": 0, "scheduled": "12:30 – 14:00", "venue": "NMKRV - Shashwathy"}, {"date": "14-Aug-2026", "event": "Dancing Lens (Set 3)", "checkins": 0, "scheduled": "14:30 – 16:00", "venue": "NMKRV - Shashwathy"}, {"date": "14-Aug-2026", "event": "Indian Competition (Set 3)", "checkins": 0, "scheduled": "16:00 – 17:30", "venue": "NMKRV - Shashwathy"}, {"date": "14-Aug-2026", "event": "Animation Competition (Set 4 - Indian)", "checkins": 0, "scheduled": "18:30 – 20:00", "venue": "NMKRV - Shashwathy"}, {"date": "15-Aug-2026", "event": "Women's Cinema Collective (Set 4)", "checkins": 20, "scheduled": "10:30 – 12:00", "venue": "NMKRV - Shashwathy"}, {"date": "15-Aug-2026", "event": "Indian Competition (Set 5)", "checkins": 11, "scheduled": "12:30 – 14:00", "venue": "NMKRV - Shashwathy"}, {"date": "15-Aug-2026", "event": "Non Competition (Set 3)", "checkins": 2, "scheduled": "14:30 – 16:00", "venue": "NMKRV - Shashwathy"}, {"date": "15-Aug-2026", "event": "Asian Eye (Set 1)", "checkins": 5, "scheduled": "16:00 – 17:30", "venue": "NMKRV - Shashwathy"}, {"date": "16-Aug-2026", "event": "Queer Qorner Competition (Set 2)", "checkins": 25, "scheduled": "10:00 – 11:30", "venue": "NMKRV - Shashwathy"}, {"date": "16-Aug-2026", "event": "Women's Cinema Collective (Set 5)", "checkins": 13, "scheduled": "12:00 – 13:30", "venue": "NMKRV - Shashwathy"}, {"date": "16-Aug-2026", "event": "Queer Qorner Competition (Set 4)", "checkins": 13, "scheduled": "14:00 – 15:30", "venue": "NMKRV - Shashwathy"}, {"date": "16-Aug-2026", "event": "Queer Qorner Competition (Set 3)", "checkins": 4, "scheduled": "15:30 – 17:00", "venue": "NMKRV - Shashwathy"}, {"date": "16-Aug-2026", "event": "Animation Competition (Set 6 - Intl)", "checkins": 0, "scheduled": "16:00 – 17:30", "venue": "NMKRV - Shashwathy"}, {"date": "16-Aug-2026", "event": "CLOSING CEREMONY", "checkins": 0, "scheduled": "18:30 – 20:00", "venue": "NMKRV - Shashwathy"}, {"date": "15-Aug-2026", "event": "Asian Eye (Set 1) *(Mangala Hall parallel track)*", "checkins": 31, "scheduled": "16:00 – 17:30", "venue": "NMKRV - Mangala"}, {"date": "14-Aug-2026", "event": "Asian Eye (Set 1)", "checkins": 9, "scheduled": "10:00 – 11:54", "venue": "Alliance Francaise - Byrappa"}, {"date": "14-Aug-2026", "event": "Queer Qorner Competition (Set 1)", "checkins": 7, "scheduled": "12:30 – 14:00", "venue": "Alliance Francaise - Byrappa"}, {"date": "14-Aug-2026", "event": "International Competition (Set 2)", "checkins": 8, "scheduled": "14:30 – 16:03", "venue": "Alliance Francaise - Byrappa"}, {"date": "14-Aug-2026", "event": "Women's Cinema Collective (Set 2)", "checkins": 5, "scheduled": "17:00 – 18:33", "venue": "Alliance Francaise - Byrappa"}, {"date": "14-Aug-2026", "event": "Queer Qorner Competition (Set 2)", "checkins": 0, "scheduled": "19:00 – 20:30", "venue": "Alliance Francaise - Byrappa"}, {"date": "15-Aug-2026", "event": "Queer Qorner Competition (Set 3)", "checkins": 1, "scheduled": "10:00 – 11:30", "venue": "Alliance Francaise - Byrappa"}, {"date": "15-Aug-2026", "event": "Animation Competition (International)", "checkins": 1, "scheduled": "12:00 – 13:30", "venue": "Alliance Francaise - Byrappa"}, {"date": "15-Aug-2026", "event": "AI-Film Showcase", "checkins": 3, "scheduled": "14:30 – 15:22", "venue": "Alliance Francaise - Byrappa"}, {"date": "15-Aug-2026", "event": "French Package", "checkins": 6, "scheduled": "16:00 – 18:01", "venue": "Alliance Francaise - Byrappa"}, {"date": "15-Aug-2026", "event": "Panel Discussion (Humanizing Margins)", "checkins": 4, "scheduled": "18:30 – 20:00", "venue": "Alliance Francaise - Byrappa"}, {"date": "15-Aug-2026", "event": "Dancing Lens (Set 3)", "checkins": 1, "scheduled": "19:30 – 20:31", "venue": "Alliance Francaise - Byrappa"}, {"date": "16-Aug-2026", "event": "Queer Qorner Competition (Set 4)", "checkins": 6, "scheduled": "10:00 – 11:38", "venue": "Alliance Francaise - Byrappa"}, {"date": "16-Aug-2026", "event": "Women's Cinema Collective (Set 3)", "checkins": 0, "scheduled": "12:15 – 13:57", "venue": "Alliance Francaise - Byrappa"}, {"date": "16-Aug-2026", "event": "Queer Qorner Competition (Set 5)", "checkins": 2, "scheduled": "15:00 – 17:12", "venue": "Alliance Francaise - Byrappa"}, {"date": "16-Aug-2026", "event": "Animation Competition (International)", "checkins": 3, "scheduled": "10:00 – 11:30", "venue": "Goethe Institute"}, {"date": "16-Aug-2026", "event": "Script to Screen 2.0 Films", "checkins": 9, "scheduled": "12:00 – 13:30", "venue": "Goethe Institute"}, {"date": "16-Aug-2026", "event": "International Competition (Set 5)", "checkins": 3, "scheduled": "15:00 – 16:48", "venue": "Goethe Institute"}, {"date": "14-Aug-2026", "event": "Let's Include (Set 1)", "checkins": 0, "scheduled": "10:30 – 12:00", "venue": "RVU"}, {"date": "14-Aug-2026", "event": "Non Competition (Set 2)", "checkins": 0, "scheduled": "12:30 – 14:00", "venue": "RVU"}, {"date": "14-Aug-2026", "event": "Asian Eye (Set 4)", "checkins": 0, "scheduled": "14:30 – 16:00", "venue": "RVU"}, {"date": "14-Aug-2026", "event": "Let's Include (Set 2)", "checkins": 0, "scheduled": "14:30 – 16:00", "venue": "RVU"}, {"date": "14-Aug-2026", "event": "Animation Competition (Set 2 - Indian)", "checkins": 0, "scheduled": "16:30 – 18:00", "venue": "RVU"}, {"date": "15-Aug-2026", "event": "AI Films (Set 2)", "checkins": 0, "scheduled": "10:00 – 11:30", "venue": "RVU"}, {"date": "15-Aug-2026", "event": "Let's Include (Set 3)", "checkins": 0, "scheduled": "12:00 – 13:30", "venue": "RVU"}, {"date": "15-Aug-2026", "event": "AI Films (Set 1)", "checkins": 0, "scheduled": "14:00 – 15:30", "venue": "RVU"}, {"date": "15-Aug-2026", "event": "Let's Include (Set 4)", "checkins": 0, "scheduled": "15:30 – 17:00", "venue": "RVU"}, {"date": "15-Aug-2026", "event": "Animation Competition (Set 1 - Intl)", "checkins": 0, "scheduled": "17:30 – 19:00", "venue": "RVU"}];
+const DATA = [
+  {"date":"14-Aug-2026","event":"AI Films (Set 1)","checkins":55,"scheduled":"10:00 – 11:30","venue":"Suchitra - Puravankara Audi"},
+  {"date":"14-Aug-2026","event":"Karnataka Competition (Set 1)","checkins":82,"scheduled":"12:00 – 13:30","venue":"Suchitra - Puravankara Audi"},
+  {"date":"14-Aug-2026","event":"Masterclass / Talk","checkins":57,"scheduled":"14:30 – 16:00","venue":"Suchitra - Puravankara Audi"},
+  {"date":"14-Aug-2026","event":"Karnataka Competition (Set 2)","checkins":53,"scheduled":"16:30 – 18:00","venue":"Suchitra - Puravankara Audi"},
+  {"date":"14-Aug-2026","event":"Indian Competition (Set 1)","checkins":58,"scheduled":"19:00 – 20:30","venue":"Suchitra - Puravankara Audi"},
+  {"date":"15-Aug-2026","event":"Indian Competition (Set 2)","checkins":82,"scheduled":"10:30 – 12:00","venue":"Suchitra - Puravankara Audi"},
+  {"date":"15-Aug-2026","event":"Karnataka Competition (Set 3)","checkins":51,"scheduled":"12:00 – 13:30","venue":"Suchitra - Puravankara Audi"},
+  {"date":"15-Aug-2026","event":"Indian Competition (Set 3)","checkins":96,"scheduled":"14:30 – 16:00","venue":"Suchitra - Puravankara Audi"},
+  {"date":"15-Aug-2026","event":"Script to Screen (Goethe Institut / BISFF)","checkins":1,"scheduled":"17:00 – 18:30","venue":"Suchitra - Puravankara Audi"},
+  {"date":"15-Aug-2026","event":"Karnataka Competition (Set 4)","checkins":0,"scheduled":"19:30 – 21:00","venue":"Suchitra - Puravankara Audi"},
+  {"date":"16-Aug-2026","event":"Karnataka Competition (Set 5)","checkins":48,"scheduled":"10:00 – 11:30","venue":"Suchitra - Puravankara Audi"},
+  {"date":"16-Aug-2026","event":"Indian Competition (Set 4)","checkins":79,"scheduled":"12:30 – 14:00","venue":"Suchitra - Puravankara Audi"},
+  {"date":"16-Aug-2026","event":"Masterclass / Talk","checkins":68,"scheduled":"14:30 – 16:00","venue":"Suchitra - Puravankara Audi"},
+  {"date":"16-Aug-2026","event":"Indian Competition (Set 5)","checkins":9,"scheduled":"15:30 – 17:00","venue":"Suchitra - Puravankara Audi"},
+  {"date":"14-Aug-2026","event":"Asian Eye (Set 1)","checkins":44,"scheduled":"10:30 – 12:00","venue":"Suchitra - Nani Angala"},
+  {"date":"14-Aug-2026","event":"Animation Competition (Set 3 - Indian)","checkins":52,"scheduled":"14:30 – 16:00","venue":"Suchitra - Nani Angala"},
+  {"date":"14-Aug-2026","event":"Queer Qorner Competition (Set 2)","checkins":17,"scheduled":"18:30 – 20:00","venue":"Suchitra - Nani Angala"},
+  {"date":"14-Aug-2026","event":"Women's Cinema Collective (Set 1)","checkins":13,"scheduled":"18:30 – 20:00","venue":"Suchitra - Nani Angala"},
+  {"date":"15-Aug-2026","event":"Animation Competition (Set 4 - Indian)","checkins":58,"scheduled":"10:00 – 11:30","venue":"Suchitra - Nani Angala"},
+  {"date":"15-Aug-2026","event":"Women's Cinema Collective (Set 3)","checkins":54,"scheduled":"12:30 – 14:00","venue":"Suchitra - Nani Angala"},
+  {"date":"15-Aug-2026","event":"Animation Competition (Set 6 - Intl)","checkins":62,"scheduled":"14:30 – 16:00","venue":"Suchitra - Nani Angala"},
+  {"date":"15-Aug-2026","event":"International Competition (Set 3)","checkins":39,"scheduled":"16:30 – 18:00","venue":"Suchitra - Nani Angala"},
+  {"date":"15-Aug-2026","event":"Non Competition (Set 4)","checkins":27,"scheduled":"18:30 – 20:00","venue":"Suchitra - Nani Angala"},
+  {"date":"16-Aug-2026","event":"Animation Competition (Set 2 - Indian)","checkins":24,"scheduled":"10:00 – 11:30","venue":"Suchitra - Nani Angala"},
+  {"date":"16-Aug-2026","event":"Non Competition (Set 5)","checkins":39,"scheduled":"12:00 – 13:30","venue":"Suchitra - Nani Angala"},
+  {"date":"16-Aug-2026","event":"International Competition (Set 1)","checkins":31,"scheduled":"14:00 – 15:30","venue":"Suchitra - Nani Angala"},
+  {"date":"16-Aug-2026","event":"Non Competition (Set 6)","checkins":6,"scheduled":"15:30 – 17:00","venue":"Suchitra - Nani Angala"},
+  {"date":"14-Aug-2026","event":"Let's Include (Set 4)","checkins":21,"scheduled":"10:30 – 12:00","venue":"Knowledgeum / Jain Knowledgeum Academy"},
+  {"date":"14-Aug-2026","event":"Asian Eye (Set 2)","checkins":14,"scheduled":"12:30 – 14:00","venue":"Knowledgeum / Jain Knowledgeum Academy"},
+  {"date":"14-Aug-2026","event":"AI Films (Set 2)","checkins":4,"scheduled":"14:00 – 15:30","venue":"Knowledgeum / Jain Knowledgeum Academy"},
+  {"date":"14-Aug-2026","event":"Karnataka Competition (Set 5)","checkins":12,"scheduled":"14:30 – 16:00","venue":"Knowledgeum / Jain Knowledgeum Academy"},
+  {"date":"14-Aug-2026","event":"Karnataka Competition (Set 3)","checkins":0,"scheduled":"19:00 – 20:30","venue":"Knowledgeum / Jain Knowledgeum Academy"},
+  {"date":"15-Aug-2026","event":"Let's Include (Set 2)","checkins":17,"scheduled":"10:00 – 11:30","venue":"Knowledgeum / Jain Knowledgeum Academy"},
+  {"date":"15-Aug-2026","event":"Asian Eye (Set 3)","checkins":14,"scheduled":"12:30 – 14:00","venue":"Knowledgeum / Jain Knowledgeum Academy"},
+  {"date":"15-Aug-2026","event":"Let's Include (Set 1)","checkins":23,"scheduled":"14:30 – 16:00","venue":"Knowledgeum / Jain Knowledgeum Academy"},
+  {"date":"15-Aug-2026","event":"Karnataka Competition (Set 1)","checkins":9,"scheduled":"16:30 – 18:00","venue":"Knowledgeum / Jain Knowledgeum Academy"},
+  {"date":"15-Aug-2026","event":"AI Films (Set 3)","checkins":0,"scheduled":"18:30 – 20:00","venue":"Knowledgeum / Jain Knowledgeum Academy"},
+  {"date":"16-Aug-2026","event":"Let's Include (Set 3)","checkins":29,"scheduled":"10:00 – 11:30","venue":"Knowledgeum / Jain Knowledgeum Academy"},
+  {"date":"16-Aug-2026","event":"Karnataka Competition (Set 4)","checkins":30,"scheduled":"12:00 – 13:30","venue":"Knowledgeum / Jain Knowledgeum Academy"},
+  {"date":"16-Aug-2026","event":"Asian Eye (Set 4)","checkins":14,"scheduled":"14:30 – 16:00","venue":"Knowledgeum / Jain Knowledgeum Academy"},
+  {"date":"16-Aug-2026","event":"Karnataka Competition (Set 2)","checkins":0,"scheduled":"16:00 – 17:30","venue":"Knowledgeum / Jain Knowledgeum Academy"},
+  {"date":"14-Aug-2026","event":"International Competition (Set 1)","checkins":0,"scheduled":"10:00 – 11:31","venue":"Indian Heritage Academy"},
+  {"date":"14-Aug-2026","event":"FILM REVIEW WORKSHOP","checkins":0,"scheduled":"12:00 – 13:30","venue":"Indian Heritage Academy"},
+  {"date":"14-Aug-2026","event":"Women's Cinema Collective (Set 1)","checkins":0,"scheduled":"14:00 – 15:37","venue":"Indian Heritage Academy"},
+  {"date":"14-Aug-2026","event":"Indian Competition (Set 4)","checkins":5,"scheduled":"16:00 – 17:39","venue":"Indian Heritage Academy"},
+  {"date":"14-Aug-2026","event":"Dancing Lens (Set 1)","checkins":2,"scheduled":"18:00 – 19:30","venue":"Indian Heritage Academy"},
+  {"date":"15-Aug-2026","event":"Dancing Lens (Set 2)","checkins":3,"scheduled":"10:15 – 11:04","venue":"Indian Heritage Academy"},
+  {"date":"15-Aug-2026","event":"International Competition (Set 3)","checkins":4,"scheduled":"11:30 – 13:23","venue":"Indian Heritage Academy"},
+  {"date":"15-Aug-2026","event":"Indian Competition (Set 5)","checkins":8,"scheduled":"14:00 – 15:44","venue":"Indian Heritage Academy"},
+  {"date":"15-Aug-2026","event":"Women's Cinema Collective (Set 3)","checkins":13,"scheduled":"16:15 – 18:10","venue":"Indian Heritage Academy"},
+  {"date":"15-Aug-2026","event":"Animation Competition (Indian)","checkins":7,"scheduled":"18:30 – 20:00","venue":"Indian Heritage Academy"},
+  {"date":"16-Aug-2026","event":"Asian Eye (Set 3)","checkins":41,"scheduled":"10:00 – 12:04","venue":"Indian Heritage Academy"},
+  {"date":"16-Aug-2026","event":"Indian Competition (Set 6)","checkins":22,"scheduled":"12:30 – 14:10","venue":"Indian Heritage Academy"},
+  {"date":"16-Aug-2026","event":"Women's Cinema Collective (Set 4)","checkins":0,"scheduled":"15:00 – 16:58","venue":"Indian Heritage Academy"},
+  {"date":"14-Aug-2026","event":"RITWIK GHATAK RETROSPECTIVE & Talk","checkins":19,"scheduled":"18:00 – 19:30","venue":"Bengaluru International Centre"},
+  {"date":"15-Aug-2026","event":"International Competition (Set 4)","checkins":21,"scheduled":"10:00 – 12:01","venue":"Bengaluru International Centre"},
+  {"date":"15-Aug-2026","event":"Indian Competition (Set 3)","checkins":5,"scheduled":"12:30 – 14:08","venue":"Bengaluru International Centre"},
+  {"date":"15-Aug-2026","event":"Asian Eye (Set 2)","checkins":5,"scheduled":"15:00 – 16:56","venue":"Bengaluru International Centre"},
+  {"date":"15-Aug-2026","event":"Animation Competition (International)","checkins":5,"scheduled":"17:15 – 18:45","venue":"Bengaluru International Centre"},
+  {"date":"15-Aug-2026","event":"Indian Competition (Set 2)","checkins":0,"scheduled":"18:30 – 20:18","venue":"Bengaluru International Centre"},
+  {"date":"16-Aug-2026","event":"Indian Competition (Set 1)","checkins":31,"scheduled":"10:00 – 11:52","venue":"Bengaluru International Centre"},
+  {"date":"16-Aug-2026","event":"Janato Cinema at BISFF 2026","checkins":10,"scheduled":"12:00 – 13:30","venue":"Bengaluru International Centre"},
+  {"date":"16-Aug-2026","event":"Indian Competition (Set 7)","checkins":1,"scheduled":"15:00 – 16:45","venue":"Bengaluru International Centre"},
+  {"date":"14-Aug-2026","event":"Dancing Lens (Set 2)","checkins":0,"scheduled":"10:30 – 12:00","venue":"NMKRV - Shashwathy"},
+  {"date":"14-Aug-2026","event":"Queer Qorner Competition (Set 3)","checkins":0,"scheduled":"12:30 – 14:00","venue":"NMKRV - Shashwathy"},
+  {"date":"14-Aug-2026","event":"Dancing Lens (Set 3)","checkins":0,"scheduled":"14:30 – 16:00","venue":"NMKRV - Shashwathy"},
+  {"date":"14-Aug-2026","event":"Indian Competition (Set 3)","checkins":0,"scheduled":"16:00 – 17:30","venue":"NMKRV - Shashwathy"},
+  {"date":"14-Aug-2026","event":"Animation Competition (Set 4 - Indian)","checkins":0,"scheduled":"18:30 – 20:00","venue":"NMKRV - Shashwathy"},
+  {"date":"15-Aug-2026","event":"Women's Cinema Collective (Set 4)","checkins":20,"scheduled":"10:30 – 12:00","venue":"NMKRV - Shashwathy"},
+  {"date":"15-Aug-2026","event":"Indian Competition (Set 5)","checkins":11,"scheduled":"12:30 – 14:00","venue":"NMKRV - Shashwathy"},
+  {"date":"15-Aug-2026","event":"Non Competition (Set 3)","checkins":2,"scheduled":"14:30 – 16:00","venue":"NMKRV - Shashwathy"},
+  {"date":"15-Aug-2026","event":"Asian Eye (Set 1)","checkins":5,"scheduled":"16:00 – 17:30","venue":"NMKRV - Shashwathy"},
+  {"date":"16-Aug-2026","event":"Queer Qorner Competition (Set 2)","checkins":25,"scheduled":"10:00 – 11:30","venue":"NMKRV - Shashwathy"},
+  {"date":"16-Aug-2026","event":"Women's Cinema Collective (Set 5)","checkins":13,"scheduled":"12:00 – 13:30","venue":"NMKRV - Shashwathy"},
+  {"date":"16-Aug-2026","event":"Queer Qorner Competition (Set 4)","checkins":13,"scheduled":"14:00 – 15:30","venue":"NMKRV - Shashwathy"},
+  {"date":"16-Aug-2026","event":"Queer Qorner Competition (Set 3)","checkins":4,"scheduled":"15:30 – 17:00","venue":"NMKRV - Shashwathy"},
+  {"date":"16-Aug-2026","event":"Animation Competition (Set 6 - Intl)","checkins":0,"scheduled":"16:00 – 17:30","venue":"NMKRV - Shashwathy"},
+  {"date":"15-Aug-2026","event":"Asian Eye (Set 1) *(Mangala Hall parallel track)*","checkins":31,"scheduled":"16:00 – 17:30","venue":"NMKRV - Mangala"},
+  {"date":"14-Aug-2026","event":"Asian Eye (Set 1)","checkins":9,"scheduled":"10:00 – 11:54","venue":"Alliance Francaise - Byrappa"},
+  {"date":"14-Aug-2026","event":"Queer Qorner Competition (Set 1)","checkins":7,"scheduled":"12:30 – 14:00","venue":"Alliance Francaise - Byrappa"},
+  {"date":"14-Aug-2026","event":"International Competition (Set 2)","checkins":8,"scheduled":"14:30 – 16:03","venue":"Alliance Francaise - Byrappa"},
+  {"date":"14-Aug-2026","event":"Women's Cinema Collective (Set 2)","checkins":5,"scheduled":"17:00 – 18:33","venue":"Alliance Francaise - Byrappa"},
+  {"date":"14-Aug-2026","event":"Queer Qorner Competition (Set 2)","checkins":0,"scheduled":"19:00 – 20:30","venue":"Alliance Francaise - Byrappa"},
+  {"date":"15-Aug-2026","event":"Queer Qorner Competition (Set 3)","checkins":1,"scheduled":"10:00 – 11:30","venue":"Alliance Francaise - Byrappa"},
+  {"date":"15-Aug-2026","event":"Animation Competition (International)","checkins":1,"scheduled":"12:00 – 13:30","venue":"Alliance Francaise - Byrappa"},
+  {"date":"15-Aug-2026","event":"AI-Film Showcase","checkins":3,"scheduled":"14:30 – 15:22","venue":"Alliance Francaise - Byrappa"},
+  {"date":"15-Aug-2026","event":"French Package","checkins":6,"scheduled":"16:00 – 18:01","venue":"Alliance Francaise - Byrappa"},
+  {"date":"15-Aug-2026","event":"Panel Discussion (Humanizing Margins)","checkins":4,"scheduled":"18:30 – 20:00","venue":"Alliance Francaise - Byrappa"},
+  {"date":"15-Aug-2026","event":"Dancing Lens (Set 3)","checkins":1,"scheduled":"19:30 – 20:31","venue":"Alliance Francaise - Byrappa"},
+  {"date":"16-Aug-2026","event":"Queer Qorner Competition (Set 4)","checkins":6,"scheduled":"10:00 – 11:38","venue":"Alliance Francaise - Byrappa"},
+  {"date":"16-Aug-2026","event":"Women's Cinema Collective (Set 3)","checkins":0,"scheduled":"12:15 – 13:57","venue":"Alliance Francaise - Byrappa"},
+  {"date":"16-Aug-2026","event":"Queer Qorner Competition (Set 5)","checkins":2,"scheduled":"15:00 – 17:12","venue":"Alliance Francaise - Byrappa"},
+  {"date":"16-Aug-2026","event":"Animation Competition (International)","checkins":3,"scheduled":"10:00 – 11:30","venue":"Goethe Institute"},
+  {"date":"16-Aug-2026","event":"Script to Screen 2.0 Films","checkins":9,"scheduled":"12:00 – 13:30","venue":"Goethe Institute"},
+  {"date":"16-Aug-2026","event":"International Competition (Set 5)","checkins":3,"scheduled":"15:00 – 16:48","venue":"Goethe Institute"},
+  {"date":"14-Aug-2026","event":"Let's Include (Set 1)","checkins":0,"scheduled":"10:30 – 12:00","venue":"RVU"},
+  {"date":"14-Aug-2026","event":"Non Competition (Set 2)","checkins":0,"scheduled":"12:30 – 14:00","venue":"RVU"},
+  {"date":"14-Aug-2026","event":"Asian Eye (Set 4)","checkins":0,"scheduled":"14:30 – 16:00","venue":"RVU"},
+  {"date":"14-Aug-2026","event":"Let's Include (Set 2)","checkins":0,"scheduled":"14:30 – 16:00","venue":"RVU"},
+  {"date":"14-Aug-2026","event":"Animation Competition (Set 2 - Indian)","checkins":0,"scheduled":"16:30 – 18:00","venue":"RVU"},
+  {"date":"15-Aug-2026","event":"AI Films (Set 2)","checkins":0,"scheduled":"10:00 – 11:30","venue":"RVU"},
+  {"date":"15-Aug-2026","event":"Let's Include (Set 3)","checkins":0,"scheduled":"12:00 – 13:30","venue":"RVU"},
+  {"date":"15-Aug-2026","event":"AI Films (Set 1)","checkins":0,"scheduled":"14:00 – 15:30","venue":"RVU"},
+  {"date":"15-Aug-2026","event":"Let's Include (Set 4)","checkins":0,"scheduled":"15:30 – 17:00","venue":"RVU"},
+  {"date":"15-Aug-2026","event":"Animation Competition (Set 1 - Intl)","checkins":0,"scheduled":"17:30 – 19:00","venue":"RVU"}
+];
 
-const venueSelect = document.getElementById("venue");
 const dateSelect = document.getElementById("date");
-const resetBtn = document.getElementById("reset");
-const eventCount = document.getElementById("eventCount");
-const checkinTotal = document.getElementById("checkinTotal");
-const maxCheckin = document.getElementById("maxCheckin");
 const chartTitle = document.getElementById("chartTitle");
 const chartNote = document.getElementById("chartNote");
-const tableBody = document.getElementById("dataTable");
 const chartWrap = document.getElementById("chartWrap");
-
 let chart;
 
-const venues = [...new Set(DATA.map(x => x.venue))].sort();
-
-function init() {
-  venueSelect.innerHTML =
-    '<option value="all">All event venues</option>' +
-    venues.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join("");
-  render();
-}
-
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
-
 function filteredData() {
-  const venue = venueSelect.value;
   const date = dateSelect.value;
-
-  return DATA.filter(row =>
-    (venue === "all" || row.venue === venue) &&
-    (date === "all" || row.date === date)
-  );
+  return DATA.filter(row => row.date === date);
 }
 
 function shortDate(date) {
@@ -201,50 +226,23 @@ function shortDate(date) {
 
 function render() {
   const rows = filteredData();
+  // Sort by scheduled start time (morning → left, evening → right)
+  rows.sort((a, b) => a.scheduled.localeCompare(b.scheduled));
 
-  // Sort chronologically by date, then scheduled time.
-  rows.sort((a,b) => {
-    const da = new Date(a.date.replace(/-/g," "));
-    const db = new Date(b.date.replace(/-/g," "));
-    if (da - db !== 0) return da - db;
-    return a.scheduled.localeCompare(b.scheduled);
-  });
+  const dateText = dateSelect.options[dateSelect.selectedIndex].text;
+  chartTitle.textContent = "Event-wise check-ins (time order)";
+  chartNote.textContent = `${dateText} • ${rows.length} event slot${rows.length === 1 ? "" : "s"} • left = morning, right = evening`;
 
-  const total = rows.reduce((sum,r) => sum + r.checkins, 0);
-  const max = rows.length ? Math.max(...rows.map(r => r.checkins)) : 0;
-
-  eventCount.textContent = rows.length.toLocaleString();
-  checkinTotal.textContent = total.toLocaleString();
-  maxCheckin.textContent = max.toLocaleString();
-
-  const venueText = venueSelect.value === "all" ? "All event venues" : venueSelect.value;
-  const dateText = dateSelect.value === "all" ? "All festival dates" : dateSelect.value;
-
-  chartTitle.textContent = `${venueText} — event check-ins`;
-  chartNote.textContent = `${dateText} • ${rows.length} event slot${rows.length === 1 ? "" : "s"}`;
-
-  tableBody.innerHTML = rows.length
-    ? rows.map(r => `
-      <tr>
-        <td>${escapeHtml(r.date)}</td>
-        <td>${escapeHtml(r.venue)}</td>
-        <td>${escapeHtml(r.event)}</td>
-        <td>${escapeHtml(r.scheduled)}</td>
-        <td><span class="badge">${r.checkins}</span></td>
-      </tr>
-    `).join("")
-    : `<tr><td colspan="5"><div class="empty">No event data for the selected filters.</div></td></tr>`;
-
-  // Horizontal bars keep long film/event names readable.
-  chartWrap.style.height = Math.max(420, rows.length * 48 + 120) + "px";
+  // Fixed height for vertical time-wise bars
+  chartWrap.style.height = "520px";
 
   if (chart) chart.destroy();
 
-  const labels = rows.map(r =>
-    dateSelect.value === "all"
-      ? `${shortDate(r.date)} • ${r.event}`
-      : r.event
-  );
+  // Label: start time + short event name
+  const labels = rows.map(r => {
+    const start = r.scheduled.split(" – ")[0] || r.scheduled;
+    return `${start}\n${r.event}`;
+  });
 
   chart = new Chart(document.getElementById("checkinChart"), {
     type: "bar",
@@ -260,7 +258,8 @@ function render() {
       }]
     },
     options: {
-      indexAxis: "y",
+      // Vertical bars: time left → right
+      indexAxis: "x",
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
@@ -270,7 +269,7 @@ function render() {
             title: items => rows[items[0].dataIndex].event,
             afterTitle: items => {
               const r = rows[items[0].dataIndex];
-              return `${r.date} • ${r.venue}`;
+              return `${r.scheduled} • ${r.venue}`;
             },
             label: item => ` Check-ins: ${item.raw}`
           }
@@ -278,32 +277,33 @@ function render() {
       },
       scales: {
         x: {
+          title: { display: true, text: "Scheduled time (morning → evening)" },
+          ticks: {
+            autoSkip: false,
+            maxRotation: 90,
+            minRotation: 45,
+            font: { size: 10 },
+            callback: function(value, index) {
+              // Show only start time on axis for clarity
+              const r = rows[index];
+              return r ? (r.scheduled.split(" – ")[0] || r.scheduled) : "";
+            }
+          },
+          grid: { display: false }
+        },
+        y: {
           beginAtZero: true,
           title: { display: true, text: "Check-ins" },
           ticks: { precision: 0 },
           grid: { color: "rgba(100,110,130,.12)" }
-        },
-        y: {
-          grid: { display: false },
-          ticks: {
-            autoSkip: false,
-            font: { size: 11 }
-          }
         }
       }
     }
   });
 }
 
-venueSelect.addEventListener("change", render);
 dateSelect.addEventListener("change", render);
-resetBtn.addEventListener("click", () => {
-  venueSelect.value = "all";
-  dateSelect.value = "all";
-  render();
-});
-
-init();
+render();
 </script>
 </body>
 </html>
